@@ -5,6 +5,7 @@ use Backend\Widgets\Lists;
 use Event;
 use DbDongle;
 use Db;
+use October\Rain\Database\Relations\BelongsToMany;
 use Request;
 use Backend;
 use System\Models\File;
@@ -965,7 +966,7 @@ class TileList extends Lists
     protected function getRecords()
     {
         //####################################
-            
+
         if ($this->showTree) {
             $records = $this->model->getAllRoot();
         }
@@ -977,6 +978,7 @@ class TileList extends Lists
             // TODO: performance check
             foreach($this->columns as $colK => $colV){
                 if(array_key_exists('relation', $colV)){
+
                     $query = $query->with($colV['relation']);
                 }
             }
@@ -1339,6 +1341,7 @@ class TileList extends Lists
             if (isset($column->relation)) {
                 // @todo Find a way...
                 $relationType = $this->model->getRelationType($column->relation);
+
                 if ($relationType == 'morphTo') {
                     throw new ApplicationException('The relationship morphTo is not supported for list columns.');
                 }
@@ -1349,9 +1352,11 @@ class TileList extends Lists
                 //
                 // Manipulate a count query for the sub query
                 //
+                /** @var BelongsToMany $relationObj */
                 $relationObj = $this->model->{$column->relation}();
-                $countQuery = $relationObj->getRelationCountQuery($relationObj->getRelated()->newQueryWithoutScopes(), $query);
-                
+
+                $countQuery = $relationObj->getRelationExistenceCountQuery($relationObj->getRelated()->newQueryWithoutScopes(), $query);
+
                 $joinSql = $this->isColumnRelated($column, true)
                     ? DbDongle::raw("group_concat(" . $sqlSelect . " separator ',')")
                     : DbDongle::raw($sqlSelect);
@@ -1373,10 +1378,10 @@ class TileList extends Lists
         //
         //dump($query->toSql());
 
-        
-        
-        
-        
+
+
+
+
         
         
         
